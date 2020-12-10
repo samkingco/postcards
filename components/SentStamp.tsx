@@ -20,7 +20,6 @@ const StyledSentStamp = styled.div<{ rotation: number; $isLarger: boolean }>`
   padding: 36px;
   font-size: 10px;
   transform: rotate(${(p) => p.rotation}deg);
-  mix-blend-mode: overlay;
   z-index: 1;
 
   ${(props) =>
