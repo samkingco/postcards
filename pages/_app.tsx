@@ -21,7 +21,9 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background: ${(p) => p.theme.colors.background};
+    background-color: ${(p) => p.theme.colors.background};
+    background-image: url('/paper.png');
+    background-size: 500px 593px;
     color: ${(p) => p.theme.colors.foreground};
     font-family: ${(p) => p.theme.fonts.body};
   }

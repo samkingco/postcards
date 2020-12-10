@@ -46,6 +46,7 @@ const SearchInput = styled.input`
   font-size: 20px;
   border: none;
   border-bottom: 2px solid ${(p) => p.theme.colors.foreground};
+  background: transparent;
   appearance: none;
   outline: none;
 
