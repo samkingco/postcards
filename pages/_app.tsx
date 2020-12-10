@@ -4,6 +4,15 @@ import { ThemeProvider, createGlobalStyle } from "styled-components";
 import theme from "../styled/theme";
 
 const GlobalStyle = createGlobalStyle`
+  @font-face {
+    font-family: 'Loma';
+    font-display: fallback;
+    src: url('/fonts/loma-regular-webfont.woff') format('woff'),
+      url('/fonts/loma-regular-webfont.woff2') format('woff2');
+    font-style: normal;
+    font-weight: normal;
+  }
+
   html,
   body {
     padding: 0;

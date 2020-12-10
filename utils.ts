@@ -38,15 +38,15 @@ export async function fetchPostJSON(url: string, data?: {}) {
   }
 }
 
-export function randomValue(a?: number, b?: number) {
-  if (!a && a !== 0) return Math.random();
-  if (!b && b !== 0) return Math.random() * a;
+export function randomValue(a?: number, b?: number, randomFunc = Math.random) {
+  if (!a && a !== 0) return randomFunc();
+  if (!b && b !== 0) return randomFunc() * a;
   if (a > b) [a, b] = [b, a];
-  return a + Math.random() * (b - a);
+  return a + randomFunc() * (b - a);
 }
 
-export function randomInt(a?: number, b?: number) {
-  return ~~randomValue(a, b);
+export function randomInt(a?: number, b?: number, randomFunc = Math.random) {
+  return ~~randomValue(a, b, randomFunc);
 }
 
 export function shuffle<T>(arr: Array<T>) {

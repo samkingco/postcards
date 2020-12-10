@@ -1,11 +1,14 @@
-import Head from "next/head";
-import Image from "next/image";
 import React, { useState } from "react";
+import Head from "next/head";
 import styled from "styled-components";
 import useSWR from "swr";
 import Fuse from "fuse.js";
+import seed from "seed-random";
 import { Postcard } from "../airtable";
-import { fetchGetJSON, shuffle } from "../utils";
+import { fetchGetJSON, randomInt, shuffle } from "../utils";
+import { SearchResults } from "../components/SearchResults";
+import { SentStamp } from "../components/SentStamp";
+import { PostcardsAnimation } from "../components/PostcardsAnimation";
 
 const SearchInput = styled.input`
   width: 100%;
@@ -33,29 +36,16 @@ const SearchInput = styled.input`
 const PostcardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  grid-gap: ${(p) => p.theme.space[6]}px;
+  grid-gap: 24px;
   align-items: center;
   justify-content: center;
+  padding: 40px;
 `;
 
-const PostcardContainer = styled.div`
+const PostcardContainer = styled.div<{ background: string }>`
   position: relative;
-  background: lightgrey;
-`;
-
-const SentStamp = styled.div`
-  width: 200px;
-  height: 200px;
-  border: 2px solid red;
-  border-radius: 50%;
-  color: red;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  position: absolute;
-  bottom: -30px;
-  right: -30px;
+  line-height: 0;
+  background: ${(p) => p.background};
 `;
 
 interface SearchState {
@@ -69,7 +59,10 @@ export default function Home() {
 
   const { data: postcards, error } = useSWR<Postcard[]>(
     "/api/postcards",
-    fetchGetJSON
+    fetchGetJSON,
+    {
+      revalidateOnFocus: false,
+    }
   );
 
   function getFallbackContent() {
@@ -105,6 +98,7 @@ export default function Home() {
     }
     return null;
   }
+
   const fallbackContent = getFallbackContent();
 
   const postcardGrid = postcards || [];
@@ -165,35 +159,9 @@ export default function Home() {
             <button onClick={randomiseResults}>Shuffle</button>
           )}
           {search ? (
-            <>
-              {search.results && search.results.length > 0 ? (
-                <PostcardContainer>
-                  <Image
-                    src={search.results[0].images[0].url}
-                    width={search.results[0].images[0].width}
-                    height={search.results[0].images[0].height}
-                  />
-                  {search.results[0].sent && (
-                    <SentStamp>{search.results[0].dateSent}</SentStamp>
-                  )}
-                </PostcardContainer>
-              ) : (
-                <h2>No results for {search.term}</h2>
-              )}
-            </>
+            <SearchResults {...search} />
           ) : (
-            <PostcardGrid>
-              {postcardGrid.map((postcard) => (
-                <PostcardContainer key={postcard.id}>
-                  <Image
-                    src={postcard.images[0].url}
-                    width={postcard.images[0].width}
-                    height={postcard.images[0].height}
-                  />
-                  {postcard.sent && <SentStamp>{postcard.dateSent}</SentStamp>}
-                </PostcardContainer>
-              ))}
-            </PostcardGrid>
+            <PostcardsAnimation postcards={postcards} />
           )}
         </>
       )}
