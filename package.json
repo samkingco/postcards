@@ -9,11 +9,15 @@
     "start": "next start"
   },
   "dependencies": {
+    "airtable": "^0.10.1",
+    "dotenv": "^8.2.0",
+    "fuse.js": "^6.4.3",
     "next": "10.0.3",
     "next-on-netlify": "^2.6.3",
     "react": "17.0.1",
     "react-dom": "17.0.1",
-    "styled-components": "^5.2.1"
+    "styled-components": "^5.2.1",
+    "swr": "^0.3.9"
   },
   "devDependencies": {
     "@types/node": "^14.14.12",
