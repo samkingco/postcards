@@ -157,9 +157,10 @@ export default function Home() {
   function onSearch() {
     const fuse = new Fuse(postcardGrid, fuseOptions);
     const results = fuse.search(searchTerm).map((results) => results.item);
+
     setSearch({
       term: searchTerm,
-      results: results.length > 1 ? shuffle(results) : [],
+      results: results.length > 0 ? shuffle(results) : [],
     });
   }
 
@@ -172,7 +173,7 @@ export default function Home() {
     const results = fuse.search(searchTerm).map((results) => results.item);
     setSearch({
       term: searchTerm,
-      results: results.length > 1 ? [...shuffle(results), currentResult] : [],
+      results: results.length > 0 ? [...shuffle(results), currentResult] : [],
     });
   }
 
