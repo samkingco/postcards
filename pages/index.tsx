@@ -3,29 +3,51 @@ import Head from "next/head";
 import styled from "styled-components";
 import useSWR from "swr";
 import Fuse from "fuse.js";
-import seed from "seed-random";
 import { Postcard } from "../airtable";
-import { fetchGetJSON, randomInt, shuffle } from "../utils";
+import { fetchGetJSON, shuffle } from "../utils";
 import { SearchResults } from "../components/SearchResults";
-import { SentStamp } from "../components/SentStamp";
-import { PostcardsAnimation } from "../components/PostcardsAnimation";
+import { PostcardsMasonry } from "../components/PostcardsMasonry";
+
+const PageWrapper = styled.main`
+  max-width: 1280px;
+  margin: 0 auto;
+`;
+
+const Logo = styled.img`
+  width: 100%;
+`;
+
+const Header = styled.header`
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  grid-gap: 40px;
+  align-items: center;
+  padding: 40px;
+`;
+
+const SearchContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr min-content;
+  grid-gap: 24px;
+  align-items: center;
+`;
+
+const SearchInputWrapper = styled.div`
+  position: relative;
+`;
 
 const SearchInput = styled.input`
   width: 100%;
   margin: none;
-  padding: 16px;
+  padding: 16px 96px 16px 0;
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   font-family: ${(p) => p.theme.fonts.body};
   font-size: 20px;
   border: none;
-  border-bottom: 1px solid ${(p) => p.theme.colors.backgroundAlt};
+  border-bottom: 2px solid ${(p) => p.theme.colors.foreground};
   appearance: none;
   outline: none;
-
-  &:focus {
-    background: ${(p) => p.theme.colors.backgroundAlt};
-  }
 
   &::placeholder {
     color: ${(p) => p.theme.colors.foreground};
@@ -33,19 +55,36 @@ const SearchInput = styled.input`
   }
 `;
 
-const PostcardGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  grid-gap: 24px;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
+const Button = styled.button`
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  outline: inherit;
 `;
 
-const PostcardContainer = styled.div<{ background: string }>`
-  position: relative;
-  line-height: 0;
-  background: ${(p) => p.background};
+const ShuffleButton = styled(Button)`
+  background-image: url("/refresh-button.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  padding: 4px 24px;
+`;
+
+const ClearButton = styled(Button)`
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+`;
+
+const EmptyState = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 `;
 
 interface SearchState {
@@ -72,7 +111,9 @@ export default function Home() {
           <Head>
             <title>Postcards—Something went wrong</title>
           </Head>
-          <p>Something went wrong. Please try again.</p>
+          <EmptyState>
+            <p>Something went wrong. Please try again.</p>
+          </EmptyState>
         </>
       );
     }
@@ -82,7 +123,9 @@ export default function Home() {
           <Head>
             <title>Postcards…</title>
           </Head>
-          <p>Loading…</p>
+          <EmptyState>
+            <p>Loading…</p>
+          </EmptyState>
         </>
       );
     }
@@ -92,7 +135,9 @@ export default function Home() {
           <Head>
             <title>Postcards</title>
           </Head>
-          <p>No postcards</p>
+          <EmptyState>
+            <p>No postcards</p>
+          </EmptyState>
         </div>
       );
     }
@@ -109,24 +154,24 @@ export default function Home() {
   };
 
   function onSearch() {
-    const fuse = new Fuse(
-      postcardGrid.filter((i) => !i.sent),
-      fuseOptions
-    );
+    const fuse = new Fuse(postcardGrid, fuseOptions);
     const results = fuse.search(searchTerm).map((results) => results.item);
-    setSearch({ term: searchTerm, results: shuffle(results) });
+    setSearch({
+      term: searchTerm,
+      results: results.length > 1 ? shuffle(results) : [],
+    });
   }
 
   function randomiseResults() {
     const currentResult = search.results[0];
     const fuse = new Fuse(
-      postcardGrid.filter((i) => !i.sent && i.id !== currentResult.id),
+      postcardGrid.filter((i) => i.id !== currentResult.id),
       fuseOptions
     );
     const results = fuse.search(searchTerm).map((results) => results.item);
     setSearch({
       term: searchTerm,
-      results: [...shuffle(results), currentResult],
+      results: results.length > 1 ? [...shuffle(results), currentResult] : [],
     });
   }
 
@@ -136,35 +181,40 @@ export default function Home() {
   }
 
   return (
-    <main>
-      <h1>Postcards</h1>
-
+    <PageWrapper>
+      <Header>
+        <Logo src="/logo.png" alt="Postcards" />
+        <SearchContainer>
+          <SearchInputWrapper>
+            <SearchInput
+              type="text"
+              value={searchTerm}
+              placeholder="Search"
+              onChange={(e) => setSearchTerm(e.currentTarget.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  onSearch();
+                }
+              }}
+            />
+            {search && <ClearButton onClick={clearSearch}>X</ClearButton>}
+          </SearchInputWrapper>
+          {search && search.results.length > 1 && (
+            <ShuffleButton onClick={randomiseResults}>Refresh</ShuffleButton>
+          )}
+        </SearchContainer>
+      </Header>
       {fallbackContent ? (
         <>{fallbackContent}</>
       ) : (
         <>
-          <SearchInput
-            type="text"
-            value={searchTerm}
-            placeholder="Search"
-            onChange={(e) => setSearchTerm(e.currentTarget.value)}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                onSearch();
-              }
-            }}
-          />
-          <button onClick={clearSearch}>Cancel</button>
-          {search && search.results.length > 1 && (
-            <button onClick={randomiseResults}>Shuffle</button>
-          )}
           {search ? (
             <SearchResults {...search} />
           ) : (
-            <PostcardsAnimation postcards={postcards} />
+            <PostcardsMasonry postcards={postcards} />
           )}
         </>
       )}
-    </main>
+    </PageWrapper>
   );
 }

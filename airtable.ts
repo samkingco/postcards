@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 const Airtable = require("airtable");
 
 Airtable.configure({
@@ -67,4 +69,29 @@ export async function getInventory() {
     });
 
   return postcards;
+}
+
+export async function markAsSent(id: string) {
+  const date = format(new Date(), "yyyy-MM-dd");
+
+  await base("Postcards").update(
+    [
+      {
+        id,
+        fields: {
+          Sent: true,
+          "Date sent": date,
+        },
+      },
+    ],
+    (err, records) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      records.forEach(function (record) {
+        console.log(record.getId());
+      });
+    }
+  );
 }

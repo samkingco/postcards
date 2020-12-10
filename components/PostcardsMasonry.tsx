@@ -1,37 +1,48 @@
 import React from "react";
 import styled from "styled-components";
+import Masonry from "react-masonry-css";
 import seed from "seed-random";
 import { Postcard } from "../airtable";
 import { randomInt } from "../utils";
 import { Image } from "./Image";
 import { SentStamp } from "./SentStamp";
-import { useWindowSize } from "../hooks/useWindowSize";
-
-const Grid = styled.div`
-  position: relative;
-`;
 
 const PostcardContainer = styled.div`
-  position: absolute;
+  position: relative;
   line-height: 0;
-  overflow: hidden;
-  width: 350px;
-  height: 350px;
+  margin-bottom: 24px;
 `;
 
-interface PostcardsAnimationProps {
+const MasonryGrid = styled(Masonry)`
+  padding: 40px;
+  display: flex;
+  margin-left: -24px;
+  width: auto;
+
+  .column {
+    padding-left: 24px;
+    background-clip: padding-box;
+  }
+`;
+
+interface PostcardsMasonryProps {
   postcards: Postcard[];
 }
 
-export function PostcardsAnimation(props: PostcardsAnimationProps) {
+export function PostcardsMasonry(props: PostcardsMasonryProps) {
   const backgroundColours = ["#E05457", "#CAC4C8", "#495C9C", "#8E6C6F"];
 
-  const width = 350;
-  const height = 350;
-  const windowDims = useWindowSize();
-
   return (
-    <Grid>
+    <MasonryGrid
+      breakpointCols={{
+        default: 4,
+        1200: 3,
+        700: 2,
+        400: 1,
+      }}
+      className=""
+      columnClassName="column"
+    >
       {props.postcards.map((postcard) => {
         const background =
           backgroundColours[
@@ -52,6 +63,6 @@ export function PostcardsAnimation(props: PostcardsAnimationProps) {
           </PostcardContainer>
         );
       })}
-    </Grid>
+    </MasonryGrid>
   );
 }
