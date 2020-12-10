@@ -5,7 +5,7 @@ import styled from "styled-components";
 import useSWR from "swr";
 import Fuse from "fuse.js";
 import { Postcard } from "../airtable";
-import { fetchGetJSON } from "../api-helpers";
+import { fetchGetJSON, shuffle } from "../utils";
 
 const SearchInput = styled.input`
   width: 100%;
@@ -40,6 +40,7 @@ const PostcardGrid = styled.div`
 
 const PostcardContainer = styled.div`
   position: relative;
+  background: lightgrey;
 `;
 
 const SentStamp = styled.div`
@@ -57,19 +58,17 @@ const SentStamp = styled.div`
   right: -30px;
 `;
 
-interface ResultsState {
+interface SearchState {
   term: string;
-  postcards: Postcard[];
+  results: Postcard[];
 }
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<
-    ResultsState | undefined
-  >();
+  const [search, setSearch] = useState<SearchState | undefined>();
 
   const { data: postcards, error } = useSWR<Postcard[]>(
-    `/api/postcards`,
+    "/api/postcards",
     fetchGetJSON
   );
 
@@ -110,22 +109,36 @@ export default function Home() {
 
   const postcardGrid = postcards || [];
 
-  const fuse = new Fuse(
-    postcardGrid.filter((i) => !i.sent),
-    {
-      keys: ["tags"],
-      threshold: 0.2,
-    }
-  );
+  const fuseOptions = {
+    keys: ["tags"],
+    threshold: 0.2,
+  };
 
   function onSearch() {
-    const postcards = fuse.search(searchTerm).map((results) => results.item);
-    setSearchResults({ term: searchTerm, postcards });
+    const fuse = new Fuse(
+      postcardGrid.filter((i) => !i.sent),
+      fuseOptions
+    );
+    const results = fuse.search(searchTerm).map((results) => results.item);
+    setSearch({ term: searchTerm, results: shuffle(results) });
+  }
+
+  function randomiseResults() {
+    const currentResult = search.results[0];
+    const fuse = new Fuse(
+      postcardGrid.filter((i) => !i.sent && i.id !== currentResult.id),
+      fuseOptions
+    );
+    const results = fuse.search(searchTerm).map((results) => results.item);
+    setSearch({
+      term: searchTerm,
+      results: [...shuffle(results), currentResult],
+    });
   }
 
   function clearSearch() {
     setSearchTerm("");
-    setSearchResults(undefined);
+    setSearch(undefined);
   }
 
   return (
@@ -148,21 +161,24 @@ export default function Home() {
             }}
           />
           <button onClick={clearSearch}>Cancel</button>
-          {searchResults ? (
+          {search && search.results.length > 1 && (
+            <button onClick={randomiseResults}>Shuffle</button>
+          )}
+          {search ? (
             <>
-              {searchResults.postcards && searchResults.postcards.length > 0 ? (
+              {search.results && search.results.length > 0 ? (
                 <PostcardContainer>
                   <Image
-                    src={searchResults.postcards[0].images[0].url}
-                    width={searchResults.postcards[0].images[0].width}
-                    height={searchResults.postcards[0].images[0].height}
+                    src={search.results[0].images[0].url}
+                    width={search.results[0].images[0].width}
+                    height={search.results[0].images[0].height}
                   />
-                  {searchResults.postcards[0].sent && (
-                    <SentStamp>{searchResults.postcards[0].dateSent}</SentStamp>
+                  {search.results[0].sent && (
+                    <SentStamp>{search.results[0].dateSent}</SentStamp>
                   )}
                 </PostcardContainer>
               ) : (
-                <h2>No results for {searchResults.term}</h2>
+                <h2>No results for {search.term}</h2>
               )}
             </>
           ) : (
